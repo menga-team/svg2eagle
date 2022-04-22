@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="svg2eagle",
-    version="0.0.1",
+    version="0.0.2",
     author="Nakano Miku",
     author_email="nakanomiku@menga.org",
     description="python package for converting svg to eagle polygons",
@@ -25,6 +25,6 @@ setuptools.setup(
     python_requires=">=3.6",
     entry_points='''
             [console_scripts]
-            svg2eagle=svg2eagle.svg2eagle:svg2eagle
+            svg2eagle=svg2eagle.svg2eagle:cli
         ''',
 )
