@@ -43,11 +43,30 @@ options:
                         the github page for help
 ```
 
+### help i dont know what that means
+k here is an example:
+```
+svg2eagle -p --name gianni -- offset 200 39 "C:\Users\Amogus\Desktop\source.svg" "C:\Users\Amogus\Desktop\destination.scr"
+```
+now lets go through the command step by step. The first word is `svg2eagle`. This lets the computer know that we are trying to execute that particular program. the rest are just options that explain what it has to do. note that everything that starts with "-" is optional and may be left out if you want to. 
+
+The second command is `-p`. `-p` is short for `--preview` and does the same exact thing. From the table above we can see it does not require additional arguments
+
+Next comes the `--name` option. But from the table above we can see that `--name` alone does not do much. It requires an addition argument. That would be the actual name we want to rename the polygon to. In this case its `gianni`. 
+
+`--offset` works the same exceptit requires two numbers. so we just write `200 39`. Wich means that our polygons are going to be offset by 200 millimeters in the x axis and 39 in the y axis. 
+
+Finally the most important part are the two file paths at the end of the command. They are not preceded by a `--[something]`, they're... just there ig. The program doesen't even work without them. Well of course it doesen't. The first option is the file path of the source SVG we want to import and the second path represents the destination file that will be created once the program has finished running. Is case of any more doubt just google it or open an issue on github.
+
 ## Installation 
-just open a terminal and paste in `pip install svg2eagle`
+first install python at https://www.python.org/downloads/, then just open a terminal and paste in `pip install svg2eagle`
 
 ### Install optional depndencies
-To be able to use the preview flag just open another terminal and paste `pip install pyqtgraph`
+To be able to use the preview flag just open another terminal and paste 
+```
+pip install pyqtgraph
+pip install pyqt5
+```
 
 ## How to safely create a 95% compatible svg from any png or jpg
 
