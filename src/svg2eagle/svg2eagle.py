@@ -1,6 +1,9 @@
 import argparse
 import math
 import random
+import os
+from matplotlib.patches import Polygon
+from shapely import geometry
 from anytree import Node, AnyNode, RenderTree
 from tqdm import tqdm
 from xml.dom import minidom
@@ -8,12 +11,8 @@ import svg.path
 import json
 import collections
 
-from youtube_dl import main
-
 
 point = collections.namedtuple('point', ['x', 'y'])
-line = collections.namedtuple('line', ['a', 'b'])
-box = collections.namedtuple('box', ['left', 'bot', 'right', 'top'])
 
 
 def prepare_svg(doc):
@@ -34,15 +33,12 @@ def prepare_svg(doc):
     return result
 
 
-def get_point_at(path, distance, dont_mirror):
+def get_point_at(path, distance):
     pos = path.point(distance)
-    if dont_mirror:
-        return point(round(pos.real, 6), -round(pos.imag, 6))
-    else:
-        return point(-round(pos.real, 6), -round(pos.imag, 6))
+    return point(-round(pos.real, 6), -round(pos.imag, 6))
 
 
-def points_from_doc(doc, density=1, dont_mirror=True):
+def points_from_doc(doc, density=1):
     paths = prepare_svg(doc)
     points = []
 
@@ -68,7 +64,7 @@ def points_from_doc(doc, density=1, dont_mirror=True):
                     distance = k/(step)
                 except ZeroDivisionError:
                     distance = 0
-                args = paths[i][j], distance, dont_mirror
+                args = paths[i][j], distance
                 points[i].append(get_point_at(*args))
                 # processes.append(Process(target=get_point_at, args=args))
             index += step+1
@@ -90,7 +86,7 @@ def getDoc(path):
         print("maybe you tried to open something as an svg that is not and svg. try the -i flag")
 
 
-def PyQt_display(inp):
+def PyQt_display(inp, lines):
     try:
         import sys
         from PyQt5.QtWidgets import QApplication
@@ -106,21 +102,34 @@ def PyQt_display(inp):
         # plot.addItem(screen)
         # for path in inp:
         #     screen.addPoints(pos=path, pen=inp.index(path))
-        legend = pg.LegendItem((80, 60), offset=(70, 20))
-        legend.setParentItem(plot.graphicsItem())
+        if lines:
+            legend = pg.LegendItem((80, 60), offset=(70, 20))
+            legend.setParentItem(plot.graphicsItem())
 
-        for path in inp:
-            x = [i[0] for i in path]
-            y = [i[1] for i in path]
-            
-            legend.addItem(plot.plot(x, y, pen=inp.index(path)), f"{inp.index(path) + 1}")
-        
+            for path in inp:
+                x = [i[0] for i in path]
+                y = [i[1] for i in path]
+
+                legend.addItem(plot.plot(x, y, pen=inp.index(
+                    path)), f"{inp.index(path) + 1}")
+        else:
+            screen = pg.ScatterPlotItem()
+            plot.addItem(screen)
+            for path in inp:
+                screen.addPoints(pos=path, pen=inp.index(path))
+
         App.exec()
 
-def scale_and_offset(inp, scale, offset):
+
+def scale_offset_mirror(inp, scale, offset, dont_mirror):
     for poly in range(len(inp)):
         for p in range(len(inp[poly])):
-            inp[poly][p] = point((inp[poly][p][0] + offset[0]) * scale, (inp[poly][p][1] + offset[1]) * scale)
+            if dont_mirror:
+                inp[poly][p] = point(
+                    (inp[poly][p][0] + offset[0]) * scale, (inp[poly][p][1] + offset[1]) * scale)
+            else:
+                inp[poly][p] = point(
+                    (-inp[poly][p][0] + offset[0]) * scale, (inp[poly][p][1] + offset[1]) * scale)
     return inp
 
 
@@ -176,135 +185,10 @@ def remove_redundant_points(inp):
     pgbar.close()
     return result
 
-
-def get_polygon_lines(polygon):
-    if not len(polygon):
-        return []
-    lines = []
-    for i in range(len(polygon)-1):
-        lines.append(line(polygon[i], polygon[i+1]))
-    lines.append(line(polygon[-1], polygon[0]))
-    return lines
-
-
-def line_intersect(linea, lineb):
-    # thx https://bryceboe.com/2006/10/23/line-segment-intersection-algorithm/
-    def ccw(A, B, C): return (C.y-A.y) * (B.x-A.x) > (B.y-A.y) * (C.x-A.x)
-    return ccw(linea.a, lineb.a, lineb.b) != ccw(linea.b, lineb.a, lineb.b) and ccw(linea.a, linea.b, lineb.a) != ccw(linea.a, linea.b, lineb.b)
-
-
-def point_in_polygon(p, polygon):
-    box = get_polygon_box(polygon)
-    faktor = line(point(box.top, box.right), point(box.bot, box.top))
-    c = distance(faktor.a, faktor.b)
-    ccw = lambda A, B, C: (C.y-A.y) * (B.x-A.x) > (B.y-A.y) * (C.x-A.x)
-        
-    for pp in polygon:
-        intersections = 0
-        
-        l2 = line(p, pp)
-        alpha = math.degrees(math.atan2(l2.a.y-l2.b.y, l2.a.x-l2.b.x))
-        a = c * math.sin(alpha)
-        b = math.sqrt(c*c - a*a)
-        new_point = point(round(pp.x-b, 6), round(pp.y-a, 6))
-        l2 = line(p, new_point)
-        
-        
-        for l1 in get_polygon_lines(polygon):
-            if ccw(l1.a, l2.a, l2.b) != ccw(l1.b, l2.a, l2.b) and ccw(l1.a, l1.b, l2.a) != ccw(l1.a, l1.b, l2.b):
-                intersections += 1
-
-            # if line_intersect(line(p, new_point), l1):
-            #     # print(intersections)
-            #     intersections += 1
-            
-            
-            # l2 = line(p, pp)
-            # dy1 = l1.b.y - l1.a.y
-            # dx1 = l1.b.x - l1.a.x
-            # dy2 = l2.b.y - l2.a.y
-            # dx2 = l2.b.x - l2.a.x
-            # # check whether the two line parallel
-            # if not dy1 * dx2 == dy2 * dx1:
-            #     x =  ((l2.a.y - l1.a.y) * dx1 * dx2 + dy1 * dx2 * l1.a.x - dy2 * dx1 * l2.a.x) / (dy1 * dx2 - dy2 * dx1)
-            #     y =  l1.a.y + (dy1 / dx1) * (x - l1.a.x)
-                # if point_in_box(point(x, y), get_polygon_box(l1)):
-                #     intersections += 1
-            # Vertices for the first line
-            # p1_start    = np.asarray([-5,   0])
-            # p1_end      = np.asarray([-3,   0])
-
-            # # Vertices for the second line
-            # p2_start    = np.asarray([0,    4])
-            # p2_end      = np.asarray([0,    2])
-
-            # p       = p1_start
-            # r       = (l1.a-l1.b)
-
-            # # q       = l.a
-            # s       = (l2.a-l2.b)
-
-            # t       = np.cross(q - p,s)/(np.cross(r,s))
-
-            # This is the intersection point
-            # i       = p + t*r
-            # l = line(p, poly_point)
-            # x = (poly_line.y - l.y) / (poly_line.x-l.x)
-            # y = l.x * x + poly_line.y
-            # lenght = distance(poly_line.a, poly_line.b) + 0.001
-            # x = ((poly_point.x / lenght) + (dist / lenght)) * lenght
-            # y = ((poly_point.y / lenght) + (dist / lenght)) * lenght
-            # new = point(x, y)
-        if intersections % 2 == 1:
-            return False
-    return True
-
-
-def get_polygon_box(polygon):
-    x = []
-    y = []
-    for i in polygon:
-        x.append(i.x)
-        y.append(i.y)
-    return box(min(x), max(y), max(x), min(y))
-
-
-def point_in_box(point, box):
-    return box.left < point.x < box.left and box.bot < point.y < box.top
-
-
-def box_in_box(boxa, boxb):
-    left = boxa.left < boxb.left
-    top = boxa.top < boxb.top
-    right = boxa.right > boxb.right
-    bot = boxa.bot > boxb.bot
-    return left and top and right and bot
-
-
-# des sich die methode de nui zu implementieren isch
 def polygon_in_polygon(polygona, polygonb):
-    # for point in polygona:
-    #     if not point_in_polygon(point, polygonb):
-    #         return False
-    # return True
-    if box_in_box(get_polygon_box(polygona), get_polygon_box(polygonb)):
-        # wenn i lei check ob a polygon-boundry box in die boundry box von an ondren polygon drin isch, norr geat sel supper
-        # sobold i ober probier mit point_in_polygon zu spezifisch zu schecken ob des in dem polygon drin isch braucht des johre
-        if polygon_intersects_polygon(polygona, polygonb):
-            return False
-        for point in polygona:
-            if not point_in_polygon(point, polygonb):
-                return False
-        return True
-    return False
-
-
-def polygon_intersects_polygon(polygona, polygonb):
-    for linea in get_polygon_lines(polygona):
-        for lineb in get_polygon_lines(polygonb):
-            if line_intersect(linea, lineb):
-                return True
-    return False
+    polygona = geometry.Polygon(polygona)
+    polygonb = geometry.Polygon(polygonb)
+    return polygona.contains(polygonb)
 
 
 def get_closest_points(polygona, polygonb):
@@ -328,7 +212,8 @@ def stich_hole_into_polygon(hole, polygon):
 
 def pop_bubbles(inp):
     inp = dict(enumerate(inp))
-    pgbar = tqdm(desc="popping bubbles", total=(len(inp) * 2) + 2, unit="polygons")
+    pgbar = tqdm(desc="popping bubbles", total=(
+        len(inp) * 2) + 2, unit="polygons")
 
     def push_down(node: Node, pgbar):
         pgbar.update()
@@ -344,13 +229,13 @@ def pop_bubbles(inp):
         if node.name != -1 and len(node.ancestors) % 2 == 1:
             for i in node.children:
                 pull_up(i, pgbar)
-                inp[node.name] = stich_hole_into_polygon(inp[i.name], inp[node.name])
+                inp[node.name] = stich_hole_into_polygon(
+                    inp[i.name], inp[node.name])
                 inp.pop(i.name)
 
         else:
             for i in node.children:
                 pull_up(i, pgbar)
-
 
     tree = Node(-1)
     tree.children = reversed(tuple(map(Node, inp.keys())))
@@ -397,7 +282,7 @@ mylist = []
 
 def svg2eagle(
     source,
-    destination,
+    destination="",
 
     density=1,
     scale=0.2,
@@ -416,21 +301,38 @@ def svg2eagle(
     name="menga",
     layer="bplace",
 
-    preview=True,
+    preview_dots=True,
+    preview_lines=True,
 ):
+    if destination == "":
+        if exportPoints:
+            destination = "points.json"
+        else:
+            destination = "script.scr"
+    source = os.path.abspath(source)
+    destination = os.path.abspath(destination)
+
+    if not os.path.isfile(source):
+        raise FileNotFoundError(f"{source} was not found")
+
+    if os.path.isdir(destination):
+        destination = os.path.join(destination, "script.scr")
+
     if import_polygons:
         mylist = importPoints(source)
     else:
-        mylist = points_from_doc(getDoc(source), density=density, dont_mirror=dont_mirror)
-    mylist = scale_and_offset(mylist, scale, offset)
+        mylist = points_from_doc(getDoc(source), density=density)
+    mylist = scale_offset_mirror(mylist, scale, offset, dont_mirror)
     if not dont_pop_bubbles:
         mylist = pop_bubbles(mylist)
     if not dont_remove_duplicates:
         mylist = remove_duplicate_points(mylist)
     if not dont_remove_redundancies:
         mylist = remove_redundant_points(mylist)
-    if preview:
-        PyQt_display(mylist)
+    if preview_dots:
+        PyQt_display(mylist, False)
+    if preview_lines:
+        PyQt_display(mylist, True)
     if export_polygons:
         exportPoints(mylist, destination)
     else:
@@ -469,12 +371,14 @@ def cli():
                     "('tplace' is the top slkscreen, while 'bplace' is the bottom silkscreen. Note that if you are printing" +
                     "somrthing on the back of a circuit you need to mirror it)")
 
-    ap.add_argument("-p", "--preview", action="store_true", required=False, help="preview the polygons before generating the script." +
+    ap.add_argument("-p", "--preview-dots", action="store_true", required=False, help="preview the polygon dots before generating the script. (faster)" +
+                    "(needs pyqtgraph, pyqt and its dependecies installed. See the github page for help")
+    ap.add_argument("-P", "--preview-lines", action="store_true", required=False, help="preview the polygons lines before generating the script. (slower)" +
                     "(needs pyqtgraph, pyqt and its dependecies installed. See the github page for help")
 
-    ap.add_argument("source", default="this.svg", type=str,
+    ap.add_argument("source", type=str,
                     help="path to source svg or to import json")
-    ap.add_argument("destination", default="this.svg", type=str,
+    ap.add_argument("destination", default="", type=str,
                     help="destination path for export or script")
 
     print(json.dumps(vars(ap.parse_args()), indent=2))
@@ -483,24 +387,3 @@ def cli():
 
 if __name__ == "__main__":
     cli()
-    # # svg2eagle("mediumtest.svg", preview=True)
-    # mylist = points_from_doc(getDoc("mediumtest.svg"), density=0.1)
-    # exportPoints(mylist, "test.json")
-    # # PyQt_display(mylist)
-    # mylist = importPoints("test.json")
-    # # exportPoints(mylist, "test.json")
-    # mylist = pop_bubbles(mylist)
-    # mylist = remove_duplicate_points(mylist)
-    # # PyQt_display(mylist)
-    # generateScript(mylist, "test.scr")
-
-    # # print(line_intersect(line(point(0, 1), point(1, 0)), line(point(1, 1), point(0, 0))))
-    
-    # A = line(point(1, -1), point(1, 0))
-    # B = line(point(1, 1), point(1, 0))
-    
-    # C = line(point(0, 0), point(2, 0))
-    
-    # print(line_intersect(A, C))
-    # print(line_intersect(B, C))
-    # print(line_intersect(A, B))
