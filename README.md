@@ -2,7 +2,7 @@
 
 Hello 
 
-This repository is decdicated to a little utility application whoose only purpose is to convert scalavle vector graphics aka. thoose pesky image files that end in ".svg" and have infinite resolution to a script that can be pasted in EAGLE and generates a polygon in the shape of the svg on the circuit board. basically it pastes your input svg into the back of your board. I'll have to let you know immediatly that it does not handle holes or colors, but there is a detailed guide below on how to safely create a 95% compatible svg from any png or jpg.
+This repository is decdicated to a little utility application whoose only purpose is to convert scalavle vector graphics aka. thoose pesky image files that end in ".svg" and have infinite resolution to a script that can be pasted in EAGLE and generates a polygon in the shape of the svg on the circuit board. basically it pastes your input svg into the back of your board. I'll have to let you know immediatly that it does not handle colors, but there is a detailed guide below on how to safely create a 95% compatible svg from any png or jpg.
 
 ## basic usage 
 yes im lazy enough to just paste the help command output
@@ -79,7 +79,9 @@ Ok here comes the really complicated part. Im guessing you have already choose y
    ![](screenshot/1.png)
 2. Then click on "Download SVG" and oh my god, its an svg! Thank you god of file formats. Next there used to be a real big sections on how to handle bubbles inside the svg. But were in the 21th century and my program is ablee to do that himself just fine!!
 3. Let's open up a terminal and type `svg2eagle -h` to see how the application works. if you are not familiar with the command propt see the quick guide above or just google online. I suggest exporting the svg to a json first and import it again with a second command in wich we generate the actual script. Just because converting the svg to polygons takes so much time (the rest is really fast don't worry). You can also install pyqt and pyqtgraph and enable the preview to see how the polygon was generated.  ![](screenshot/6.png)
-4. For our next and final step, open your board in EAGLE and go to *Files* > *Execute Script* (NOT *Execute ULP*) and click on it. This will open a popup with various prewritten scripts and options. Ignore everything exept for the *Browse*  button. Click on it and navigate in the newly opened file manager to the script you just wrote. Open it and and the programm will start pasting in the polygons. ![](screenshot/7.png)
+
+## Import the srcipt in EAGLE
+ As you may have noticed, a "xxxx.scr" has been generated. Open your board in EAGLE and go to *Files* > *Execute Script* (NOT *Execute ULP*) and click on it. This will open a popup with various prewritten scripts and options. Ignore everything exept for the *Browse*  button. Click on it and navigate in the newly opened file manager to the "xxxx.scr" you just wrote. Open it and and the programm will start pasting in the polygons. ![](screenshot/7.png)
 ### More Resources
 In case you did not fully understand the guide above (its very possible, i suck at documentation) here are some additional resources that might help you
 - https://learn.sparkfun.com/tutorials/importing-custom-images-into-eagle/method-1-svg-to-polygon
