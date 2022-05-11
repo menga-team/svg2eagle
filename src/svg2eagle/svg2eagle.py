@@ -35,7 +35,7 @@ def prepare_svg(doc):
 
 def get_point_at(path, distance):
     pos = path.point(distance)
-    return point(-round(pos.real, 6), -round(pos.imag, 6))
+    return point(round(pos.real, 6), -round(pos.imag, 6))
 
 
 def points_from_doc(doc, density=1):

@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="svg2eagle",
-    version="1.0.0",
+    version="1.0.2",
     author="Nakano Miku",
     author_email="nakanomiku@menga.org",
     description="python package for converting svg to eagle polygons",
@@ -20,7 +20,13 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=['tqdm', 'svg.path', 'shapely'],
+    install_requires=[
+        "tqdm",
+        "svg.path",
+        "shapely",
+        "matplotlib",
+        "anytree"
+        ],
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.6",
