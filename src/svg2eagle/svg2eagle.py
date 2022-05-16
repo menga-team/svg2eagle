@@ -22,7 +22,6 @@ def prepare_svg(doc):
 
        # print(paths)
     result = []
-    temp_paths = [paths[1]]
     last_move = 0
     for i in paths[1:]:
         if isinstance(i, svg.path.Move):
@@ -35,7 +34,7 @@ def prepare_svg(doc):
 
 def get_point_at(path, distance):
     pos = path.point(distance)
-    return point(round(pos.real, 6), -round(pos.imag, 6))
+    return point(round(pos.real, 6), round(pos.imag, 6))
 
 
 def points_from_doc(doc, density=1):
@@ -162,10 +161,29 @@ def pointAreClose(a, b):
 def distance(a, b):
     return math.sqrt((a.x - b.x)**2 + (a.y - b.y)**2)
 
+def is_between(a,c,b):
+    if (math.isclose(a[0], b[0]) and math.isclose(b[0], c[0])) or (math.isclose(a[1], b[1]) and math.isclose(b[1], c[1])):
+        return True
+    else:
+        crossproduct = (c.y - a.y) * (b.x - a.x) - (c.x - a.x) * (b.y - a.y)
 
-def remove_redundant_points_from_path(inp, pgbar=None):
-    def is_between(a, c, b):
-        return math.isclose(distance(a, c) + distance(c, b), distance(a, b))
+        # compare versus epsilon for floating point values, or != 0 if using integers
+        if abs(crossproduct) > 0.001:
+            return False
+
+        dotproduct = (c.x - a.x) * (b.x - a.x) + (c.y - a.y)*(b.y - a.y)
+        if dotproduct < 0:
+            return False
+
+        squaredlengthba = (b.x - a.x)*(b.x - a.x) + (b.y - a.y)*(b.y - a.y)
+        if dotproduct > squaredlengthba:
+            return False
+
+        return True
+
+def remove_redundant_points_from_path(inp, pgbar):
+    if inp == []:
+        return []
     result = []
     for i in range(1, len(inp) - 1):
         if not is_between(inp[i-1], inp[i], inp[i+1]):
@@ -253,11 +271,12 @@ def generateScript(inp, script_path, width=0.1, name="menga", layer="bplace"):
     pgbar = tqdm(desc="generating script", total=total, unit="points")
     script = f"CHANGE layer {layer}; CHANGE rank 3; CHANGE pour solid; SET WIRE_BEND 2;\n"
     for path in inp:
-        script += f"polygon {name} {width}mm "
-        for point in path:
-            pgbar.update()
-            script += f" ({point.x}mm {point.y}mm) "
-        script += ";\n"
+        if len(path) > 2:
+            script += f"polygon {name} {width}mm "
+            for point in path:
+                pgbar.update()
+                script += f" ({round(point.x, 3)}mm {round(point.y, 3)}mm) "
+            script += ";\n"
     open(script_path, "w").write(script)
     pgbar.close()
     print("script was saved to ", script_path)
