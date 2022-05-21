@@ -263,13 +263,13 @@ def pop_bubbles(inp):
     return list(inp.values())
 
 
-def generateScript(inp, script_path, width=0.1, name="menga", layer="bplace"):
+def generateScript(inp, script_path, width=0.1, name="menga", layer="bplace", wire_bend=2):
     total = 0
     for path in inp:
         for point in path:
             total += 1
     pgbar = tqdm(desc="generating script", total=total, unit="points")
-    script = f"CHANGE layer {layer}; CHANGE rank 3; CHANGE pour solid; SET WIRE_BEND 2;\n"
+    script = f"set wire_bend {wire_bend};CHANGE layer {layer}; CHANGE rank 3; CHANGE pour solid\n"
     for path in inp:
         if len(path) > 2:
             script += f"polygon {name} {width}mm "
@@ -356,7 +356,7 @@ def svg2eagle(
         exportPoints(mylist, destination)
     else:
         generateScript(mylist, destination, width=width,
-                       name=name, layer=layer)
+                       name=name, layer=layer, wire_bend=wire_bend)
 
 def cli():
     ap = argparse.ArgumentParser()
@@ -389,6 +389,8 @@ def cli():
     ap.add_argument("-l", "--layer", default="bplace", type=str, required=False, help="layer the polygons will be printed on " +
                     "('tplace' is the top slkscreen, while 'bplace' is the bottom silkscreen. Note that if you are printing" +
                     "somrthing on the back of a circuit you need to mirror it)")
+    ap.add_argument("-j", "--wire-bend", default=2, choices=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+                    required=False, help="type of wire bend to be used")
 
     ap.add_argument("-p", "--preview-dots", action="store_true", required=False, help="preview the polygon dots before generating the script. (faster)" +
                     "(needs pyqtgraph, pyqt and its dependecies installed. See the github page for help")
