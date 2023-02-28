@@ -4,7 +4,25 @@ Hello
 
 This repository is decdicated to a little utility application whoose only purpose is to convert scalavle vector graphics aka. thoose pesky image files that end in ".svg" and have infinite resolution to a script that can be pasted in EAGLE and generates a polygon in the shape of the svg on the circuit board. basically it pastes your input svg into the back of your board. I'll have to let you know immediatly that it does not handle colors, but there is a detailed guide below on how to safely create a 95% compatible svg from any png or jpg.
 
-## basic usage 
+## GUI usage
+
+make sure to install the extra GUI dependencies
+
+```shell
+pip install pyqt5
+```
+
+call the following command to open the GUI
+
+```shell
+svg2eagle-gui
+```
+
+**Please make sure to check the guide below on how to create compatible svg images**
+
+![screenshot/menu.png](screenshot/menu.png)
+
+## basic command line usage 
 yes im lazy enough to just paste the help command output
 ```
 svg2eagle [-h] [-d DENSITY] [-s SCALE] [-o OFFSET OFFSET] [-m] [-i] [-e] [-x] [-X] [-w WIDTH] [-n NAME] [-l LAYER] [-p]
@@ -64,7 +82,8 @@ You may have noticed that you can export and import polygons. I highly reccomend
 ## Installation 
 first install python at https://www.python.org/downloads/, then just open a terminal and paste in `pip install svg2eagle`
 
-### Install optional depndencies
+### Install optional despondencies
+
 To be able to use the preview flag just open another terminal and paste 
 ```
 pip install pyqtgraph
@@ -88,9 +107,15 @@ In case you did not fully understand the guide above (its very possible, i suck 
 - thats about it, i didn't find anything else
 
 ## 1.0.0 Changelog
+
+- wow we have a graphical user interface now
+
+## 1.0.0 Changelog
+
 - Now pop Bubbles automatically!1!1!1!1!1
 - offset, mirroring and scaling is now done in post-processing
 - added Line-preview option
 - minor cleanups 
+
 ## License
 [MIT](https://mit-license.org/)

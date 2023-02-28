@@ -1,5 +1,6 @@
 *.scr
 # *.svg
+*.fleet
 
 test.py
 .undodir/*

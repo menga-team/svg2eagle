@@ -33,5 +33,6 @@ setuptools.setup(
     entry_points='''
             [console_scripts]
             svg2eagle=svg2eagle.svg2eagle:cli
+            svg2eagle-gui=svg2eagle.svg2eagle:gui
         ''',
 )
