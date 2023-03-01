@@ -106,7 +106,7 @@ In case you did not fully understand the guide above (its very possible, i suck 
 - https://learn.sparkfun.com/tutorials/importing-custom-images-into-eagle/method-1-svg-to-polygon
 - thats about it, i didn't find anything else
 
-## 1.0.0 Changelog
+## 1.1.0 Changelog
 
 - wow we have a graphical user interface now
 
