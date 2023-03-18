@@ -953,6 +953,7 @@ def gui():
                 if self.line_preview_button.isChecked():
                     self.thread.finished.connect(lambda: PyQt_display(mylist, True))
                 self.thread.run = lambda: svg2eagle(**args)
+                self.thread.start()
                 # try:
                 #     self.thread.start()
                 # except Exception as e:

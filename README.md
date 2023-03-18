@@ -9,6 +9,7 @@ This repository is decdicated to a little utility application whoose only purpos
 make sure to install the extra GUI dependencies
 
 ```shell
+pip install svg2eagle -U
 pip install pyqt5
 ```
 
@@ -80,7 +81,7 @@ Finally the most important part are the two file paths at the end of the command
 You may have noticed that you can export and import polygons. I highly reccomend to just convert the svg to a polygon and export it to a json file. once thats done you can import it again and reexport it to thge same file wqhile previewing all of the steps. Thats because the conversion from svg to polygon takes a considerable amount of time and may lead to miscalculations if everyth9ing is done in a single step. instead let's say you messed up the scale of the polygon, instead of having to regenerating the polygon anew, you can just import the old polygon and generate a script from that. Note that every argument affects the polygon itself and may be used at any time the program is run, except for the density wich is applied when the svg is converted.
 
 ## Installation 
-first install python at https://www.python.org/downloads/, then just open a terminal and paste in `pip install svg2eagle`
+first install python at https://www.python.org/downloads/, then just open a terminal and paste in `pip install svg2eagle -U`
 
 ### Install optional despondencies
 
